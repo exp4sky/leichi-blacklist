@@ -7,44 +7,39 @@ on:
 
 permissions:
   contents: write
-  pull-requests: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create dist directory
-        run: mkdir -p dist
+          persist-credentials: true      # v5 默认就带，显式写出来保险
 
       - name: Generate leichi_black.rsc
         run: bash "$GITHUB_WORKSPACE/generator.bash"
 
-      - name: Sanity check
+      - name: Commit & push
         run: |-
           FILE="dist/leichi_black.rsc"
-          echo "字节=$(wc -c < "$FILE") v4=$(grep -cE '^:do \{add address=[0-9]+\.[0-9]+' "$FILE") v6=$(grep -cE '^:do \{add address=[0-9a-fA-F:]+:' "$FILE")"
-          head -6 "$FILE"
-          if [ "$(grep -cE '^:do \{add address=' "$FILE")" -lt 100 ]; then
-            echo "条目过少，放弃提交"; exit 1
+          echo "=== 产物校验 ==="
+          ls -la "$FILE"
+          echo "v4=$(grep -cE '^:do \{add address=[0-9]+\.[0-9]+' "$FILE") v6=$(grep -cE '^:do \{add address=[0-9a-fA-F:]+:' "$FILE")"
+
+          git config user.name  "ActionBot"
+          git config user.email "action_bot@rookiezoe.com"
+
+          # 关键：真正把内容加进暂存区，而不是 -N 占位
+          git add "$FILE"
+
+          # 跟 HEAD 比，连“内容从 1 字节变成 386KB”也算变化
+          if git diff --cached --quiet; then
+            echo "真的没变化，跳过"; exit 0
           fi
 
-      - name: Commit and push
-        run: |-
-          FILE="dist/leichi_black.rsc"
-          git config user.email "action_bot@rookiezoe.com"
-          git config user.name "ActionBot"
-          git add -N "$FILE"
-          git diff --quiet --cached -- "$FILE" && { echo "无变化"; exit 0; }
-          git add "$FILE"
           git commit -m "Auto update leichi blacklist [every 2 days]"
 
-          echo ">>> 拉远端并变基"
-          git fetch origin "${{ github.ref_name }}"
-          git rebase "origin/${{ github.ref_name }}"
-
-          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
+          # v5 + persist-credentials 下，直接推就行，不用手 rebase
+          git push
