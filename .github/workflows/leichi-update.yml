@@ -13,8 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -28,31 +27,23 @@ jobs:
       - name: Sanity check
         run: |-
           FILE="dist/leichi_black.rsc"
-          echo "[DEBUG] 字节: $(wc -c < "$FILE") 行: $(wc -l < "$FILE")"
-          echo "[DEBUG] v4 add 行: $(grep -cE '^:do \{add address=[0-9]+\.[0-9]+' "$FILE")"
-          echo "[DEBUG] v6 add 行: $(grep -cE '^:do \{add address=[0-9a-fA-F:]+:' "$FILE")"
-          echo "[DEBUG] 首 12 行:"
-          head -12 "$FILE"
+          echo "字节=$(wc -c < "$FILE") v4=$(grep -cE '^:do \{add address=[0-9]+\.[0-9]+' "$FILE") v6=$(grep -cE '^:do \{add address=[0-9a-fA-F:]+:' "$FILE")"
+          head -6 "$FILE"
           if [ "$(grep -cE '^:do \{add address=' "$FILE")" -lt 100 ]; then
-            echo "!! rsc 有效条目过少，终止提交，保留上一版"
-            exit 1
+            echo "条目过少，放弃提交"; exit 1
           fi
 
-      - name: Commit and push if changed
+      - name: Commit and push
         run: |-
-          git config --global user.email "action_bot@rookiezoe.com"
-          git config --global user.name "ActionBot"
-
-          # 没变化就安静退出
-          git add -N dist/leichi_black.rsc
-          if git diff --quiet --cached -- dist/leichi_black.rsc; then
-            echo "无变化，跳过提交"
-            exit 0
-          fi
-          git add dist/leichi_black.rsc
+          FILE="dist/leichi_black.rsc"
+          git config user.email "action_bot@rookiezoe.com"
+          git config user.name "ActionBot"
+          git add -N "$FILE"
+          git diff --quiet --cached -- "$FILE" && { echo "无变化"; exit 0; }
+          git add "$FILE"
           git commit -m "Auto update leichi blacklist [every 2 days]"
 
-          # 关键：先拉远端新提交，把本次提交接在后面再推，彻底治 non-fast-forward
+          echo ">>> 拉远端并变基"
           git fetch origin "${{ github.ref_name }}"
           git rebase "origin/${{ github.ref_name }}"
 
