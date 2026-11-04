@@ -14,6 +14,7 @@ URLS=(
   acac1ffdf22748359d0e5d0e3e37f25d
   9fd9cb6726a14e9595051a4412042c5f
   e85c5b6b2efb46078fcd6076c9ad12df
+  36a83dbc39374235b99a5004a0956fcd
 )
 
 RSC="$DIST/leichi_black.rsc"
