@@ -28,14 +28,14 @@ jobs:
       - name: Sanity check
         run: |-
           FILE="dist/leichi_black.rsc"
-          echo "[DEBUG] 行数: $(wc -l < "$FILE")"
-          echo "[DEBUG] 首 10 行:"
-          head -10 "$FILE"
-          echo "[DEBUG] 末尾 5 行:"
-          tail -5 "$FILE"
-          # 兜底：空的 rsc 不让它覆盖仓库里的旧版
-          if [ "$(wc -l < "$FILE")" -lt 20 ]; then
-            echo "!! 生成的 rsc 异常偏短，终止提交"
+          echo "[DEBUG] 字节: $(wc -c < "$FILE") 行: $(wc -l < "$FILE")"
+          echo "[DEBUG] v4 add 行: $(grep -cE '^:do \{add address=[0-9]+\.[0-9]+' "$FILE")"
+          echo "[DEBUG] v6 add 行: $(grep -cE '^:do \{add address=[0-9a-fA-F:]+:' "$FILE")"
+          echo "[DEBUG] 首 12 行:"
+          head -12 "$FILE"
+          # 有效条目 < 100 一律判异常，绝不覆盖仓库里的好版本
+          if [ "$(grep -cE '^:do \{add address=' "$FILE")" -lt 100 ]; then
+            echo "!! rsc 有效条目过少，终止提交，保留上一版"
             exit 1
           fi
 
