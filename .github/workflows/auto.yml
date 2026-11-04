@@ -1,0 +1,59 @@
+name: cnip-cidr-auto
+on:
+  schedule:
+    - cron: '0 12 */2 * *'  # UTC 12:00 每2天执行 = 北京时间 20:00
+  workflow_dispatch:      # 支持手动触发测试
+
+# 授予工作流仓库读写权限，保证git推送正常
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 修复：提前创建dist目录，解决「Not a directory」核心报错
+      - name: Create dist directory
+        run: mkdir -p dist
+
+      - name: Update cn_ip_cidr.rsc
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        # 修复：使用默认工作目录，移除冗余路径
+        run: |-
+          bash $GITHUB_WORKSPACE/generator.bash
+
+      # 核心逻辑：删除IPv6兼容判断行，保留调试日志
+      - name: Remove IPv6 package check line
+        run: |-
+          # 修复：使用简化路径，无嵌套目录
+          FILE_PATH="dist/cn_ip_cidr.rsc"
+
+          echo "[DEBUG] 开始检索目标代码行"
+          grep -n "system package find where name=\"ipv6\"" "$FILE_PATH" || echo "[DEBUG] 未检索到目标行"
+
+          sed -i '/system package find where name="ipv6"/d' "$FILE_PATH"
+
+          echo "[DEBUG] 删除完成，二次校验结果"
+          grep -n "system package find where name=\"ipv6\"" "$FILE_PATH" || echo "[SUCCESS] 目标代码行已彻底删除"
+
+          echo "[DEBUG] 脚本文件前20行预览："
+          head -20 "$FILE_PATH"
+
+      - name: Commit and push if changed
+        run: |-
+          git diff
+          git config --global user.email "action_bot@rookiezoe.com"
+          git config --global user.name "ActionBot"
+          git add -A
+          # 提交信息匹配定时规则
+          git commit -m "Auto update IP list + remove IPv6 check line [every 2 days]" || exit 0
+          # 标准化推送命令，兼容Actions环境
+          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
