@@ -33,7 +33,6 @@ jobs:
           echo "[DEBUG] v6 add 行: $(grep -cE '^:do \{add address=[0-9a-fA-F:]+:' "$FILE")"
           echo "[DEBUG] 首 12 行:"
           head -12 "$FILE"
-          # 有效条目 < 100 一律判异常，绝不覆盖仓库里的好版本
           if [ "$(grep -cE '^:do \{add address=' "$FILE")" -lt 100 ]; then
             echo "!! rsc 有效条目过少，终止提交，保留上一版"
             exit 1
@@ -41,9 +40,20 @@ jobs:
 
       - name: Commit and push if changed
         run: |-
-          git diff
           git config --global user.email "action_bot@rookiezoe.com"
           git config --global user.name "ActionBot"
+
+          # 没变化就安静退出
+          git add -N dist/leichi_black.rsc
+          if git diff --quiet --cached -- dist/leichi_black.rsc; then
+            echo "无变化，跳过提交"
+            exit 0
+          fi
           git add dist/leichi_black.rsc
-          git commit -m "Auto update leichi blacklist [every 2 days]" || exit 0
+          git commit -m "Auto update leichi blacklist [every 2 days]"
+
+          # 关键：先拉远端新提交，把本次提交接在后面再推，彻底治 non-fast-forward
+          git fetch origin "${{ github.ref_name }}"
+          git rebase "origin/${{ github.ref_name }}"
+
           git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
