@@ -7,7 +7,6 @@ TMP="$WORK_DIR/tmp"
 DIST="$WORK_DIR/dist"
 mkdir -p "$TMP" "$DIST"
 
-# 6 个雷池分享分组；要增删直接改这里
 URLS=(
   1b54b445642b4b6ea3b9259d844aeb29
   986a6a2a747e42d88b2679bf494fb57c
@@ -17,53 +16,63 @@ URLS=(
   e85c5b6b2efb46078fcd6076c9ad12df
 )
 
-: > "$DIST/leichi_black.rsc"
+RSC="$DIST/leichi_black.rsc"
+: > "$RSC"
 
 {
   echo "# 由 leichi-blacklist 自动生成，勿手改"
   echo "# 源：雷池 WAF 分享分组 x ${#URLS[@]}"
   echo "# 生成时间: $(date -Is)"
   echo "/log info \"[leichi] 开始导入黑名单 -> $LIST\""
-} >> "$DIST/leichi_black.rsc"
+} >> "$RSC"
 
 # ---------- IPv4 ----------
 {
   echo "/ip firewall address-list remove [find list=\"$LIST\"]"
   echo "/ip firewall address-list"
-} >> "$DIST/leichi_black.rsc"
+} >> "$RSC"
 
 for id in "${URLS[@]}"; do
-  part="$TMP/$id.txt.part"
-  out="$TMP/$id.txt"
+  part="$TMP/$id.txt.part"; out="$TMP/$id.txt"
   if curl -s --retry 3 --max-time 90 "${BASE}${id}?format=cidr" -o "$part"; then
     mv "$part" "$out"
   else
     echo "!! 拉取失败，保留缓存: $id" >&2
-    rm -f "$part"
-    [ -f "$out" ] || continue
+    rm -f "$part"; [ -f "$out" ] || continue
   fi
-  # 只认纯 IPv4 CIDR，顺手去重、过滤注释与脏行
-  grep -E '^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]+$' "$out" \
+  # 先 tr 砍掉 \r，再过滤非法行、去重
+  tr -d '\r' < "$out" \
+    | grep -E '^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]+$' \
     | sort -u \
     | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}'
-done >> "$DIST/leichi_black.rsc"
+done >> "$RSC"
 
 # ---------- IPv6 ----------
 {
   echo "/ipv6 firewall address-list remove [find list=\"$LIST\"]"
   echo "/ipv6 firewall address-list"
-} >> "$DIST/leichi_black.rsc"
+} >> "$RSC"
 
 for id in "${URLS[@]}"; do
-  out="$TMP/$id.txt"
-  [ -f "$out" ] || continue
-  grep -E '^[0-9a-fA-F:]+:/[0-9]+$' "$out" \
+  out="$TMP/$id.txt"; [ -f "$out" ] || continue
+  tr -d '\r' < "$out" \
+    | grep -E '^[0-9a-fA-F:]+:/[0-9]+$' \
     | sort -u \
     | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}'
-done >> "$DIST/leichi_black.rsc"
+done >> "$RSC"
 
-echo "/log info \"[leichi] 黑名单导入完成: $LIST\"" >> "$DIST/leichi_black.rsc"
+echo "/log info \"[leichi] 黑名单导入完成: $LIST\"" >> "$RSC"
 
-v4=$(grep -cE '^:do \{add address=[0-9]+\.[0-9]+' "$DIST/leichi_black.rsc")
-v6=$(grep -cE '^:do \{add address=[0-9a-fA-F:]+:' "$DIST/leichi_black.rsc")
-echo "OK v4=$v4 v6=$v6 -> $DIST/leichi_black.rsc"
+v4=$(grep -cE '^:do \{add address=[0-9]+\.[0-9]+' "$RSC")
+v6=$(grep -cE '^:do \{add address=[0-9a-fA-F:]+:' "$RSC")
+
+echo "===== 生成结果 ====="
+echo "v4 有效条目: $v4"
+echo "v6 有效条目: $v6"
+echo "产物: $RSC ($(wc -c < "$RSC") 字节)"
+
+# 兜底：有效条目太少就直接失败，防止空壳被推上去
+if [ "$((v4 + v6))" -lt 100 ]; then
+  echo "!! 有效条目不足 100，判定生成失败"
+  exit 1
+fi
