@@ -1,6 +1,6 @@
 # 由 leichi-blacklist 自动生成，勿手改
 # 源：雷池 WAF 分享分组 x 15
-# 生成时间: 2026-11-09T07:07:01+00:00
+# 生成时间: 2026-11-09T21:39:45+00:00
 /log info "[leichi] 开始导入黑名单 -> leichi_black_all"
 /ip firewall address-list remove [find list="leichi_black_all"]
 /ip firewall address-list
