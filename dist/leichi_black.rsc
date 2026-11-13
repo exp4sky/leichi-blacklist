@@ -1,6 +1,6 @@
 # 由 leichi-blacklist 自动生成，勿手改
 # 源：雷池 WAF 分享分组 x 15
-# 生成时间: 2026-11-11T18:54:16+00:00
+# 生成时间: 2026-11-13T18:50:01+00:00
 /log info "[leichi] 开始导入黑名单 -> leichi_black_all"
 /ip firewall address-list remove [find list="leichi_black_all"]
 /ip firewall address-list
@@ -47886,6 +47886,7 @@
 :do {add address=103.217.255.2/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=103.218.0.126/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=103.223.122.198/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=103.224.182.189/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=103.224.182.217/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=103.226.155.59/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=103.229.61.160/32 list=leichi_black_all timeout=0} on-error={}
@@ -47896,9 +47897,11 @@
 :do {add address=103.255.208.126/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=103.27.179.233/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=103.27.79.110/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=103.35.188.48/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=103.43.18.19/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=103.43.8.226/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=103.43.9.193/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=103.46.186.148/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=103.64.13.103/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=103.68.181.196/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=103.68.195.236/32 list=leichi_black_all timeout=0} on-error={}
@@ -47949,6 +47952,7 @@
 :do {add address=104.36.229.213/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=104.37.187.182/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=105.101.65.153/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=105.187.26.236/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=106.53.181.113/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=107.148.128.138/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=107.148.50.136/32 list=leichi_black_all timeout=0} on-error={}
@@ -47968,6 +47972,8 @@
 :do {add address=109.236.50.3/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=109.248.235.149/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=109.248.59.253/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=109.63.128.197/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=110.138.188.141/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=110.36.29.195/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=110.38.210.180/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=110.92.65.18/32 list=leichi_black_all timeout=0} on-error={}
@@ -47982,6 +47988,7 @@
 :do {add address=112.213.108.54/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=112.213.108.76/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=112.213.116.154/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=112.248.190.135/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=113.230.23.24/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=114.29.236.229/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=115.56.181.207/32 list=leichi_black_all timeout=0} on-error={}
@@ -48038,12 +48045,14 @@
 :do {add address=121.45.96.109/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=121.54.190.64/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=122.10.117.11/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=122.10.85.4/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=122.248.198.240/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=123.11.5.64/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=123.129.155.241/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=123.57.209.214/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=123.57.211.129/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=124.156.105.11/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=124.158.13.141/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=125.40.137.244/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=128.1.131.58/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=128.127.105.184/32 list=leichi_black_all timeout=0} on-error={}
@@ -48166,6 +48175,7 @@
 :do {add address=143.92.61.108/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=143.92.61.141/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=143.92.61.180/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=144.126.242.167/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=144.172.103.75/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=144.172.106.66/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=144.172.112.106/32 list=leichi_black_all timeout=0} on-error={}
@@ -48174,6 +48184,7 @@
 :do {add address=144.172.94.115/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=144.172.98.170/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=144.172.99.81/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=144.48.132.30/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=146.185.171.227/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=146.190.178.187/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=146.70.245.66/32 list=leichi_black_all timeout=0} on-error={}
@@ -48307,6 +48318,7 @@
 :do {add address=156.247.41.9/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=156.247.41.96/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=156.248.78.118/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=156.251.11.135/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=156.251.11.137/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=156.251.16.63/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=156.251.16.74/32 list=leichi_black_all timeout=0} on-error={}
@@ -48326,6 +48338,7 @@
 :do {add address=157.55.39.53/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=157.66.146.183/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=157.90.165.137/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=157.90.33.74/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=158.178.201.63/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=158.94.210.30/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=159.138.11.10/32 list=leichi_black_all timeout=0} on-error={}
@@ -48354,6 +48367,7 @@
 :do {add address=161.248.238.54/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=161.248.87.175/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=161.248.87.250/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=162.0.239.85/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=162.216.240.8/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=162.245.221.12/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=163.172.125.253/32 list=leichi_black_all timeout=0} on-error={}
@@ -48399,10 +48413,12 @@
 :do {add address=173.194.208.26/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=173.249.217.7/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=173.63.31.85/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=175.124.145.102/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=175.41.145.5/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=175.41.176.23/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=176.113.115.145/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=176.58.99.92/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=176.65.139.196/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=176.65.139.202/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=176.65.139.36/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=176.65.139.46/32 list=leichi_black_all timeout=0} on-error={}
@@ -48415,8 +48431,11 @@
 :do {add address=176.65.148.250/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=176.65.149.124/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=176.65.149.4/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=176.97.117.201/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=177.4.3.101/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=177.4.3.107/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=177.4.3.114/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=177.4.3.118/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=177.4.3.34/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=177.4.3.62/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=177.4.3.99/32 list=leichi_black_all timeout=0} on-error={}
@@ -48431,6 +48450,7 @@
 :do {add address=178.62.201.34/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=178.63.42.199/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=178.83.121.208/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=179.236.96.10/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=179.236.96.8/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=179.43.128.3/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=179.43.139.83/32 list=leichi_black_all timeout=0} on-error={}
@@ -48465,6 +48485,7 @@
 :do {add address=180.178.37.106/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=180.178.56.230/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=180.210.203.65/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=180.244.255.34/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=181.214.58.112/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=181.215.18.89/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=182.117.119.43/32 list=leichi_black_all timeout=0} on-error={}
@@ -48483,6 +48504,7 @@
 :do {add address=184.75.221.59/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=184.75.223.195/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=184.75.223.235/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=185.106.120.99/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=185.11.61.146/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=185.117.72.87/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=185.122.184.16/32 list=leichi_black_all timeout=0} on-error={}
@@ -48526,6 +48548,7 @@
 :do {add address=186.240.201.246/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=186.240.201.27/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=186.241.79.252/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=187.110.223.227/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=188.169.13.22/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=188.214.33.170/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=191.223.39.59/32 list=leichi_black_all timeout=0} on-error={}
@@ -48562,6 +48585,7 @@
 :do {add address=192.238.204.162/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=192.238.204.179/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=192.241.157.109/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=192.253.209.32/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=192.253.229.102/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=192.253.234.20/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=192.253.235.86/32 list=leichi_black_all timeout=0} on-error={}
@@ -48606,6 +48630,7 @@
 :do {add address=195.26.248.212/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=195.82.147.8/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=196.189.98.110/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=196.210.57.231/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=196.251.107.133/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=196.251.114.181/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=196.251.117.67/32 list=leichi_black_all timeout=0} on-error={}
@@ -48620,6 +48645,7 @@
 :do {add address=198.23.212.233/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=198.44.133.101/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=198.44.185.131/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=198.44.46.58/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=198.46.178.148/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=198.46.178.152/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=199.2.137.29/32 list=leichi_black_all timeout=0} on-error={}
@@ -48779,8 +48805,10 @@
 :do {add address=213.152.162.104/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=213.152.162.15/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=213.152.162.154/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=213.152.162.19/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=213.152.162.27/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=213.152.162.69/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=213.152.162.74/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=213.152.162.89/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=213.209.143.62/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=213.209.143.76/32 list=leichi_black_all timeout=0} on-error={}
@@ -48806,6 +48834,7 @@
 :do {add address=218.244.156.94/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=218.244.58.70/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=221.3.102.12/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=222.127.50.108/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=223.123.43.3/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=223.123.43.70/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=223.26.52.34/32 list=leichi_black_all timeout=0} on-error={}
@@ -48833,6 +48862,7 @@
 :do {add address=23.249.20.51/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=23.249.29.117/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=23.27.113.27/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=27.102.137.185/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=27.106.119.119/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=27.124.10.237/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=27.124.12.160/32 list=leichi_black_all timeout=0} on-error={}
@@ -48904,6 +48934,7 @@
 :do {add address=31.41.244.12/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=31.41.244.9/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=31.56.209.129/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=31.56.228.45/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=31.57.47.45/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=31.57.51.149/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=31.59.137.217/32 list=leichi_black_all timeout=0} on-error={}
@@ -48919,6 +48950,7 @@
 :do {add address=35.158.159.254/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=35.188.105.97/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=35.225.54.236/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=35.74.112.232/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=35.75.93.241/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=36.92.27.251/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=36.93.147.195/32 list=leichi_black_all timeout=0} on-error={}
@@ -48976,6 +49008,7 @@
 :do {add address=38.6.115.142/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=38.60.235.109/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=38.76.177.46/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=38.76.183.197/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=38.91.115.114/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=38.91.115.42/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=39.104.202.54/32 list=leichi_black_all timeout=0} on-error={}
@@ -48988,6 +49021,7 @@
 :do {add address=42.229.252.17/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=43.100.90.18/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=43.100.90.23/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=43.106.102.167/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=43.129.186.177/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=43.132.231.144/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=43.133.177.200/32 list=leichi_black_all timeout=0} on-error={}
@@ -49128,6 +49162,7 @@
 :do {add address=45.9.148.99/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=45.91.226.130/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=45.91.226.25/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=45.92.16.135/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=45.95.214.119/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=46.101.173.178/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=46.101.214.197/32 list=leichi_black_all timeout=0} on-error={}
@@ -49262,6 +49297,7 @@
 :do {add address=54.195.169.28/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=54.228.45.142/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=54.244.188.177/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=54.251.230.93/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=54.251.69.246/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=54.254.148.22/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=54.254.156.73/32 list=leichi_black_all timeout=0} on-error={}
@@ -49302,6 +49338,7 @@
 :do {add address=64.86.243.186/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=64.95.11.206/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=65.56.110.100/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=66.132.224.225/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=66.203.155.231/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=66.234.146.138/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=66.240.205.34/32 list=leichi_black_all timeout=0} on-error={}
@@ -49328,6 +49365,7 @@
 :do {add address=77.110.119.23/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=77.220.212.32/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=77.232.41.51/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=77.239.124.135/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=77.247.92.106/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=77.75.230.135/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=77.90.15.136/32 list=leichi_black_all timeout=0} on-error={}
@@ -49385,6 +49423,7 @@
 :do {add address=81.18.134.18/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=81.229.60.159/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=81.230.148.181/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=81.88.13.178/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=81.88.18.108/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=82.102.23.131/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=82.102.28.107/32 list=leichi_black_all timeout=0} on-error={}
@@ -49426,6 +49465,7 @@
 :do {add address=89.31.121.220/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=91.143.171.160/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=91.193.7.162/32 list=leichi_black_all timeout=0} on-error={}
+:do {add address=91.195.240.12/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=91.204.224.152/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=91.208.162.187/32 list=leichi_black_all timeout=0} on-error={}
 :do {add address=91.230.73.101/32 list=leichi_black_all timeout=0} on-error={}
