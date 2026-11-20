@@ -2,7 +2,7 @@ name: leichi-update
 
 on:
   schedule:
-    - cron: '0 7 */2 * *'   # 每2天执行一次
+    - cron: '0 7 */2 * *'
   workflow_dispatch:
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20      # 防止 curl 卡死拖满默认 6 小时
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -20,7 +20,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      # 缓存 tmp/：源没变就直接复用，既提速又天然抗网络抖动
       - name: Cache tmp
         uses: actions/cache@v4
         with:
@@ -29,14 +28,13 @@ jobs:
           restore-keys: |
             leichi-tmp-${{ runner.os }}-
 
-      # 整个生成步骤失败自动重跑，最多 3 次
       - name: Generate leichi_black.rsc
         uses: nick-fields/retry@v3
         with:
-          timeout_minutes: 15
+          timeout_minutes: 18
           max_attempts: 3
           retry_on: error
-          command: bash "$GITHUB_WORKSPACE/generator.bash"
+          command: bash -x "$GITHUB_WORKSPACE/generator.bash" 2>&1
 
       - name: Commit & push
         run: |-
@@ -47,17 +45,12 @@ jobs:
 
           git config user.name  "ActionBot"
           git config user.email "action_bot@rookiezoe.com"
-
-          # 关键：真正把内容加进暂存区，而不是 -N 占位
           git add "$FILE"
 
-          # 跟 HEAD 比，连“内容从 1 字节变成 386KB”也算变化
           if git diff --cached --quiet; then
             echo "真的没变化，跳过"
             exit 0
           fi
 
           git commit -m "Auto update leichi blacklist [every 2 days]"
-
-          # v5 + persist-credentials 下，直接推就行，不用手 rebase
           git push
