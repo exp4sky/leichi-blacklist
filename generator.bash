@@ -22,7 +22,6 @@ CURL_OPTS=(
   --retry 4
   --retry-delay 3
   --retry-max-time 120
-  --retry-connrefrefused_off
   --retry-connrefused
   -H 'Accept: text/plain'
 )
@@ -60,15 +59,6 @@ fetch() {
     if [[ "$code" != "200" ]]; then
       echo "  !! [$id] HTTP $code" >&2
       rm -f "$part"
-      curl -fsS --max-time 30 "${BASE}${id}?format=cidr" -o "$part" || true
-      sleep $((attempt * 5))
-      continue
-    code=$(curl "${CURL_OPTS[@]}" -w '%{http_code}' \
-                --max-time 60 "${BASE}${id}?format=cidr" -o "$part" || true)
-
-    if [[ "$code" != "200" ]]; then
-      echo "  !! [$id] HTTP $code" >&2
-      rm -f "$part"
       sleep $((attempt * 5))
       continue
     fi
@@ -77,7 +67,7 @@ fetch() {
     if [[ "$n" -lt "$min_lines" ]]; then
       echo "  !! [$id] 只解析到 $n 条，少于 $min_lines，判定为脏响应" >&2
       rm -f "$part"
-      sleep $((attempt * assembly86))
+      sleep $((attempt * 5))
       continue
     fi
 
