@@ -9,20 +9,20 @@ DIST="$WORK_DIR/dist"
 mkdir -p "$TMP" "$DIST"
 
 # ---------- 可调参数 ----------
-MIN_TOTAL=100                 # 全局最少条目数，低于此判定失败
-MAX_V4=20000                  # v4 条数上限，0 = 不限制（防止低端软路由内存爆掉）
+MIN_TOTAL=100                 # 全局最少条目数
+MAX_V4=20000                  # v4 条数上限，0 = 不限制
 MAX_V6=2000                   # v6 条数上限，0 = 不限制
-FETCH_MIN=1                   # 单个源最少要有几条合法 CIDR，否则视为脏响应
+FETCH_MIN=1                   # 单个源最少合法 CIDR 数
 
 # ---------- 下载参数 ----------
 CURL_OPTS=(
-  -fsS                        # 关键：HTTP >=400 直接非 0 退出，不再把错误页当数据
-  --connect-timeout 10        # 建连（含 DNS）最多 10s
-  --max-time 90               # 单次请求总上限
-  --retry 4                   # 超时 / 408 / 429 / 5xx 自动重试
-  --retry-delay 3             # 重试间隔 3s
-  --retry-max-time 120        # 重试总耗时上限
-  --retry-connrefused         # 连接被拒也重试
+  -fsS
+  --connect-timeout 10
+  --max-time 60
+  --retry 4
+  --retry-delay 3
+  --retry-max-time 120
+  --retry-connrefused
   -H 'Accept: text/plain'
 )
 
@@ -44,8 +44,7 @@ URLS=(
   59d799619dfd49e8980f3218aad398e4
 )
 
-# ---------- 拉取：带重试 + 最小条数校验 ----------
-# 用法: fetch <id> [最小合法行数]
+# ---------- 拉取函数 ----------
 fetch() {
   local id="$1"
   local min_lines="${2:-$FETCH_MIN}"
@@ -54,10 +53,8 @@ fetch() {
 
   for attempt in 1 2 3; do
     echo "  · [$id] 第 $attempt 次拉取..." >&2
-
-    # -w 拿状态码；curl 失败时用 || true 兜住，避免 set -e 直接退出
     code=$(curl "${CURL_OPTS[@]}" -w '%{http_code}' \
-                --max-time 90 "${BASE}${id}?format=cidr" -o "$part" || true)
+                --max-time 60 "${BASE}${id}?format=cidr" -o "$part" || true)
 
     if [[ "$code" != "200" ]]; then
       echo "  !! [$id] HTTP $code" >&2
@@ -66,7 +63,6 @@ fetch() {
       continue
     fi
 
-    # 立刻校验：至少 min_lines 行合法 v4 CIDR，否则判定为脏响应（HTML 错误页等）
     n=$(tr -d '\r' < "$part" | grep -cE '^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]+$' || true)
     if [[ "$n" -lt "$min_lines" ]]; then
       echo "  !! [$id] 只解析到 $n 条，少于 $min_lines，判定为脏响应" >&2
@@ -80,7 +76,6 @@ fetch() {
     return 0
   done
 
-  # 三次都失败：有旧缓存就降级使用，否则返回失败让上层计数
   if [[ -s "$out" ]]; then
     echo "  ⚠ [$id] 全部重试失败，降级使用缓存 $(wc -l < "$out") 条" >&2
     return 0
@@ -92,6 +87,7 @@ fetch() {
 RSC="$DIST/leichi_black.rsc"
 : > "$RSC"
 
+# ---------- 写入头部 ----------
 {
   echo "# 由 leichi-blacklist 自动生成，勿手改"
   echo "# 源：雷池 WAF 分享分组 x ${#URLS[@]}"
@@ -108,10 +104,13 @@ RSC="$DIST/leichi_black.rsc"
 fail=0
 for id in "${URLS[@]}"; do
   if fetch "$id" "$FETCH_MIN"; then
-    tr -d '\r' < "$TMP/$id.txt" \
-      | grep -E '^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]+$' \
-      | awk '!seen[$0]++' \
-      | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}'
+    # 管道整体用大括号包住，末尾加 || true 防止 set -e 中断
+    {
+      tr -d '\r' < "$TMP/$id.txt" \
+        | grep -E '^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]+$' \
+        | sort -u \
+        | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}'
+    } || true
   else
     fail=$((fail + 1))
   fi
@@ -119,8 +118,20 @@ done >> "$RSC"
 
 # ---------- v4 条数上限 ----------
 if (( MAX_V4 > 0 )); then
-  head -n "$MAX_V4" "$RSC" > "$RSC.v4"
-  mv "$RSC.v4" "$RSC"
+  v4_count=$(grep -cE '^:do \{add address=[0-9]+\.[0-9]+' "$RSC" || true)
+  if (( v4_count > MAX_V4 )); then
+    # 保留前 MAX_V4 条 v4 记录（头部不变，只删除多余的 v4 行）
+    awk -v max="$MAX_V4" '
+      BEGIN { cnt = 0 }
+      /^:do \{add address=[0-9]+\.[0-9]+/ {
+        if (cnt >= max) next
+        cnt++
+      }
+      { print }
+    ' "$RSC" > "$RSC.v4"
+    mv "$RSC.v4" "$RSC"
+    echo "  · v4 截断：$v4_count -> $MAX_V4" >&2
+  fi
 fi
 
 # ================= IPv6 =================
@@ -132,29 +143,37 @@ fi
 for id in "${URLS[@]}"; do
   out="$TMP/$id.txt"
   [[ -f "$out" ]] || continue
-  tr -d '\r' < "$out" \
-    | grep -E '^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}/[0-9]+$' \
-    | awk '!seen[$0]++' \
-    | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}'
+  {
+    tr -d '\r' < "$out" \
+      | grep -E '^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}/[0-9]+$' \
+      | sort -u \
+      | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}'
+  } || true
 done >> "$RSC"
 
 # ---------- v6 条数上限 ----------
 if (( MAX_V6 > 0 )); then
-  total_lines=$(wc -l < "$RSC")
-  v6_keep=$MAX_V6
-  # 只保留最后 MAX_V6 条 v6，前面的头部（remove + /ipv6 ...）不动
-  {
-    head -n $((total_lines - v6_keep))
-    tail -n "$v6_keep"
-  } < "$RSC" > "$RSC.v6" 2>/dev/null || tail -n "$v6_keep" "$RSC" > "$RSC.v6"
-  mv "$RSC.v6" "$RSC"
+  v6_count=$(grep -cE '^:do \{add address=[0-9a-fA-F:]+:' "$RSC" || true)
+  if (( v6_count > MAX_V6 )); then
+    awk -v max="$MAX_V6" '
+      BEGIN { cnt = 0 }
+      /^:do \{add address=[0-9a-fA-F:]+:/ {
+        if (cnt >= max) next
+        cnt++
+      }
+      { print }
+    ' "$RSC" > "$RSC.v6"
+    mv "$RSC.v6" "$RSC"
+    echo "  · v6 截断：$v6_count -> $MAX_V6" >&2
+  fi
 fi
 
+# ---------- 收尾日志 ----------
 echo "/log info \"[leichi] 黑名单导入完成: $LIST\"" >> "$RSC"
 
 # ================= 校验 =================
-v4=$(grep -cE '^:do \{add address=[0-9]+\.[0-9]+' "$RSC")
-v6=$(grep -cE '^:do \{add address=[0-9a-fA-F:]+:' "$RSC")
+v4=$(grep -cE '^:do \{add address=[0-9]+\.[0-9]+' "$RSC" || true)
+v6=$(grep -cE '^:do \{add address=[0-9a-fA-F:]+:' "$RSC" || true)
 
 echo "===== 生成结果 ====="
 echo "v4 有效条目: $v4"
@@ -162,7 +181,6 @@ echo "v6 有效条目: $v6"
 echo "失败源数量: $fail / ${#URLS[@]}"
 echo "产物: $RSC ($(wc -c < "$RSC") 字节)"
 
-# 用算术上下文 (( ))，不要用 [ ... -gt ]，避免参数个数陷阱导致误判
 total=$((v4 + v6))
 half=$(( ${#URLS[@]} / 2 ))
 
