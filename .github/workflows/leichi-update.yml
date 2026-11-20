@@ -2,7 +2,7 @@ name: leichi-update
 
 on:
   schedule:
-    - cron: '0 7 */2 * *'   # UTC 12:00 每2天 = 北京时间 20:00
+    - cron: '0 7 */2 * *'   # 每2天 执行一次
   workflow_dispatch:
 
 permissions:
