@@ -9,9 +9,9 @@ DIST="$WORK_DIR/dist"
 mkdir -p "$TMP" "$DIST"
 
 # ---------- 可调参数 ----------
-MIN_TOTAL=100                 # 全局最少条目数
-MAX_V4=20000                  # v4 条数上限，0 = 不限制
-MAX_V6=2000                   # v6 条数上限，0 = 不限制
+MIN_TOTAL=100                 # 全局最少条目数，低于此判定失败
+MAX_V4=0                      # v4 条数上限，0 = 不限制（全量）
+MAX_V6=0                      # v6 条数上限，0 = 不限制（全量）
 FETCH_MIN=1                   # 单个源最少合法 CIDR 数
 
 # ---------- 下载参数 ----------
@@ -87,6 +87,10 @@ fetch() {
 RSC="$DIST/leichi_black.rsc"
 : > "$RSC"
 
+# 记录生成/拉取失败的源，结尾汇总，避免静默少条目
+declare -a FAILED_FETCH=()
+declare -a FAILED_GEN=()
+
 # ---------- 写入头部 ----------
 {
   echo "# 由 leichi-blacklist 自动生成，勿手改"
@@ -101,26 +105,29 @@ RSC="$DIST/leichi_black.rsc"
   echo "/ip firewall address-list"
 } >> "$RSC"
 
-fail=0
 for id in "${URLS[@]}"; do
-  if fetch "$id" "$FETCH_MIN"; then
-    # 管道整体用大括号包住，末尾加 || true 防止 set -e 中断
-    {
-      tr -d '\r' < "$TMP/$id.txt" \
-        | grep -E '^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]+$' \
-        | sort -u \
-        | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}'
-    } || true
-  else
-    fail=$((fail + 1))
+  if ! fetch "$id" "$FETCH_MIN"; then
+    FAILED_FETCH+=("$id")
+    continue
   fi
-done >> "$RSC"
+  # 先落到单源临时文件，成功才追加进 RSC，失败则记录，绝不静默吞掉
+  if tr -d '\r' < "$TMP/$id.txt" \
+      | grep -E '^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]+$' \
+      | sort -u \
+      | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}' \
+      > "$TMP/$id.v4"; then
+    cat "$TMP/$id.v4" >> "$RSC"
+    echo "  · [$id] v4 入表 $(wc -l < "$TMP/$id.v4") 条" >&2
+  else
+    echo "  !! [$id] v4 生成失败，已跳过该源" >&2
+    FAILED_GEN+=("$id")
+  fi
+done
 
-# ---------- v4 条数上限 ----------
+# ---------- v4 条数上限（MAX_V4=0 时跳过） ----------
 if (( MAX_V4 > 0 )); then
   v4_count=$(grep -cE '^:do \{add address=[0-9]+\.[0-9]+' "$RSC" || true)
   if (( v4_count > MAX_V4 )); then
-    # 保留前 MAX_V4 条 v4 记录（头部不变，只删除多余的 v4 行）
     awk -v max="$MAX_V4" '
       BEGIN { cnt = 0 }
       /^:do \{add address=[0-9]+\.[0-9]+/ {
@@ -143,15 +150,19 @@ fi
 for id in "${URLS[@]}"; do
   out="$TMP/$id.txt"
   [[ -f "$out" ]] || continue
-  {
-    tr -d '\r' < "$out" \
+  if tr -d '\r' < "$out" \
       | grep -E '^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}/[0-9]+$' \
       | sort -u \
-      | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}'
-  } || true
-done >> "$RSC"
+      | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}' \
+      > "$TMP/$id.v6"; then
+    cat "$TMP/$id.v6" >> "$RSC"
+  else
+    echo "  !! [$id] v6 生成失败，已跳过" >&2
+    FAILED_GEN+=("$id")
+  fi
+done
 
-# ---------- v6 条数上限 ----------
+# ---------- v6 条数上限（MAX_V6=0 时跳过） ----------
 if (( MAX_V6 > 0 )); then
   v6_count=$(grep -cE '^:do \{add address=[0-9a-fA-F:]+:' "$RSC" || true)
   if (( v6_count > MAX_V6 )); then
@@ -178,10 +189,12 @@ v6=$(grep -cE '^:do \{add address=[0-9a-fA-F:]+:' "$RSC" || true)
 echo "===== 生成结果 ====="
 echo "v4 有效条目: $v4"
 echo "v6 有效条目: $v6"
-echo "失败源数量: $fail / ${#URLS[@]}"
+echo "拉取失败源: ${#FAILED_FETCH[@]} -> ${FAILED_FETCH[*]:-无}"
+echo "生成失败源: ${#FAILED_GEN[@]} -> ${FAILED_GEN[*]:-无}"
 echo "产物: $RSC ($(wc -c < "$RSC") 字节)"
 
 total=$((v4 + v6))
+fail_cnt=$(( ${#FAILED_FETCH[@]} + ${#FAILED_GEN[@]} ))
 half=$(( ${#URLS[@]} / 2 ))
 
 if (( total < MIN_TOTAL )); then
@@ -189,8 +202,8 @@ if (( total < MIN_TOTAL )); then
   exit 1
 fi
 
-if (( fail > half )); then
-  echo "!! 失败源过半: fail=$fail > half=$half"
+if (( fail_cnt > half )); then
+  echo "!! 失败源过半: fail=$fail_cnt > half=$half"
   exit 1
 fi
 
