@@ -2,7 +2,7 @@ name: leichi-update
 
 on:
   schedule:
-    - cron: '0 7 */2 * *'
+    - cron: '0 7 */2 * *'   # 每2天执行一次
   workflow_dispatch:
 
 permissions:
@@ -34,7 +34,7 @@ jobs:
           timeout_minutes: 18
           max_attempts: 3
           retry_on: error
-          command: bash -x "$GITHUB_WORKSPACE/generator.bash" 2>&1
+          command: bash "$GITHUB_WORKSPACE/generator.bash"
 
       - name: Commit & push
         run: |-
