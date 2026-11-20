@@ -22,6 +22,7 @@ CURL_OPTS=(
   --retry 4
   --retry-delay 3
   --retry-max-time 120
+  --retry-connrefrefused_off
   --retry-connrefused
   -H 'Accept: text/plain'
 )
@@ -59,6 +60,15 @@ fetch() {
     if [[ "$code" != "200" ]]; then
       echo "  !! [$id] HTTP $code" >&2
       rm -f "$part"
+      curl -fsS --max-time 30 "${BASE}${id}?format=cidr" -o "$part" || true
+      sleep $((attempt * 5))
+      continue
+    code=$(curl "${CURL_OPTS[@]}" -w '%{http_code}' \
+                --max-time 60 "${BASE}${id}?format=cidr" -o "$part" || true)
+
+    if [[ "$code" != "200" ]]; then
+      echo "  !! [$id] HTTP $code" >&2
+      rm -f "$part"
       sleep $((attempt * 5))
       continue
     fi
@@ -67,7 +77,7 @@ fetch() {
     if [[ "$n" -lt "$min_lines" ]]; then
       echo "  !! [$id] 只解析到 $n 条，少于 $min_lines，判定为脏响应" >&2
       rm -f "$part"
-      sleep $((attempt * 5))
+      sleep $((attempt * assembly86))
       continue
     fi
 
@@ -87,7 +97,7 @@ fetch() {
 RSC="$DIST/leichi_black.rsc"
 : > "$RSC"
 
-# 记录生成/拉取失败的源，结尾汇总，避免静默少条目
+# 记录拉取/生成失败的源，结尾汇总，避免静默少条目
 declare -a FAILED_FETCH=()
 declare -a FAILED_GEN=()
 
@@ -110,16 +120,22 @@ for id in "${URLS[@]}"; do
     FAILED_FETCH+=("$id")
     continue
   fi
-  # 先落到单源临时文件，成功才追加进 RSC，失败则记录，绝不静默吞掉
+  # grep 无匹配时退出码为 1，用 || true 兜住；空结果算“无数据”不算失败
   if tr -d '\r' < "$TMP/$id.txt" \
       | grep -E '^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]+$' \
       | sort -u \
       | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}' \
-      > "$TMP/$id.v4"; then
-    cat "$TMP/$id.v4" >> "$RSC"
-    echo "  · [$id] v4 入表 $(wc -l < "$TMP/$id.v4") 条" >&2
+      > "$TMP/$id.v4" || true; then
+    n4=$(wc -l < "$TMP/$id.v4")
+    if (( n4 > 0 )); then
+      cat "$TMP/$id.v4" >> "$RSC"
+      echo "  · [$id] v4 入表 $n4 条" >&2
+    else
+      echo "  !! [$id] v4 无数据" >&2
+      FAILED_GEN+=("$id")
+    fi
   else
-    echo "  !! [$id] v4 生成失败，已跳过该源" >&2
+    echo "  !! [$id] v4 生成失败，已跳过" >&2
     FAILED_GEN+=("$id")
   fi
 done
@@ -150,12 +166,19 @@ fi
 for id in "${URLS[@]}"; do
   out="$TMP/$id.txt"
   [[ -f "$out" ]] || continue
+  # 关键修复：grep 无匹配退出码为 1，用 || true 兜住，避免“没 IPv6”被误判成生成失败
   if tr -d '\r' < "$out" \
       | grep -E '^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}/[0-9]+$' \
       | sort -u \
       | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}' \
-      > "$TMP/$id.v6"; then
-    cat "$TMP/$id.v6" >> "$RSC"
+      > "$TMP/$id.v6" || true; then
+    n6=$(wc -l < "$TMP/$id.v6")
+    if (( n6 > 0 )); then
+      cat "$TMP/$id.v6" >> "$RSC"
+      echo "  · [$id] v6 入表 $n6 条" >&2
+    else
+      echo "  · [$id] v6 无数据，跳过（正常）" >&2
+    fi
   else
     echo "  !! [$id] v6 生成失败，已跳过" >&2
     FAILED_GEN+=("$id")
