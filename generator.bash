@@ -1,11 +1,24 @@
 #! /bin/bash
-set -e
+set -euo pipefail
+
 WORK_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 BASE="https://ip-21801.rivers.chaitin.cn/api/share/ip_group/"
 LIST="leichi_black_all"
 TMP="$WORK_DIR/tmp"
 DIST="$WORK_DIR/dist"
 mkdir -p "$TMP" "$DIST"
+
+# ---------- 下载参数集中管理 ----------
+CURL_OPTS=(
+  -fsS                      # 关键：HTTP >=400 直接非 0 退出
+  --connect-timeout 10      # 建连（含 DNS）最多 10s
+  --max-time 90             # 单次请求总上限
+  --retry 4                 # 超时/408/429/5xx 自动重试
+  --retry-delay 3           # 重试间隔 3s，退避
+  --retry-max-time 120      # 重试总耗时上限
+  --retry-connrefused       # 连接被拒也重试
+  -H 'Accept: text/plain'
+)
 
 URLS=(
   1b54b445642b4b6ea3b9259d844aeb29
@@ -25,6 +38,44 @@ URLS=(
   59d799619dfd49e8980f3218aad398e4
 )
 
+# ---------- 拉取（带重试 + 最小条数校验） ----------
+# 用法: fetch <id> <最小合法行数>
+fetch() {
+  local id="$1" min_lines="$2"
+  local part="$TMP/$id.part" out="$TMP/$id.txt" n
+  local code body
+
+  for attempt in 1 2 3; do
+    echo "  · [$id] 第 $attempt 次拉取..." >&2
+    code=$(curl "${CURL_OPTS[@]}" -w '%{http_code}' \
+                --max-time 90 "${BASE}${id}?format=cidr" -o "$part" || true)
+
+    if [[ "$code" != "200" ]]; then
+      echo "  !! [$id] HTTP $code" >&2
+      rm -f "$part"; sleep $((attempt * 5)); continue
+    fi
+
+    # 立刻校验：至少要有 min_lines 行合法 CIDR，否则视为脏数据
+    n=$(tr -d '\r' < "$part" | grep -cE '^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]+$' || true)
+    if [[ "$n" -lt "$min_lines" ]]; then
+      echo "  !! [$id] 只解析到 $n 条，少于 $min_lines，判定为脏响应" >&2
+      rm -f "$part"; sleep $((attempt * 5)); continue
+    fi
+
+    mv "$part" "$out"
+    echo "  ✓ [$id] 拿到 $n 条" >&2
+    return 0
+  done
+
+  # 三次都失败：有旧缓存就降级用，否则返回失败让上层决定
+  if [[ -s "$out" ]]; then
+    echo "  ⚠ [$id] 全部重试失败，降级使用缓存 $(wc -l < "$out") 条" >&2
+    return 0
+  fi
+  echo "  ✗ [$id] 拉取失败且无缓存" >&2
+  return 1
+}
+
 RSC="$DIST/leichi_black.rsc"
 : > "$RSC"
 
@@ -35,25 +86,22 @@ RSC="$DIST/leichi_black.rsc"
   echo "/log info \"[leichi] 开始导入黑名单 -> $LIST\""
 } >> "$RSC"
 
-# ---------- IPv4 ----------
+# ---------- IPv4（每个源至少要有 1 条才算成功） ----------
 {
   echo "/ip firewall address-list remove [find list=\"$LIST\"]"
   echo "/ip firewall address-list"
 } >> "$RSC"
 
+fail=0
 for id in "${URLS[@]}"; do
-  part="$TMP/$id.txt.part"; out="$TMP/$id.txt"
-  if curl -s --retry 3 --max-time 90 "${BASE}${id}?format=cidr" -o "$part"; then
-    mv "$part" "$out"
+  if fetch "$id" 1; then
+    tr -d '\r' < "$TMP/$id.txt" \
+      | grep -E '^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]+$' \
+      | sort -u \
+      | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}'
   else
-    echo "!! 拉取失败，保留缓存: $id" >&2
-    rm -f "$part"; [ -f "$out" ] || continue
+    fail=$((fail + 1))
   fi
-  # 先 tr 砍掉 \r，再过滤非法行、去重
-  tr -d '\r' < "$out" \
-    | grep -E '^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]+$' \
-    | sort -u \
-    | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}'
 done >> "$RSC"
 
 # ---------- IPv6 ----------
@@ -65,7 +113,7 @@ done >> "$RSC"
 for id in "${URLS[@]}"; do
   out="$TMP/$id.txt"; [ -f "$out" ] || continue
   tr -d '\r' < "$out" \
-    | grep -E '^[0-9a-fA-F:]+:/[0-9]+$' \
+    | grep -E '^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}/[0-9]+$' \
     | sort -u \
     | awk -v L="$LIST" '{ printf(":do {add address=%s list=%s timeout=0} on-error={}\n",$1,L)}'
 done >> "$RSC"
@@ -78,10 +126,12 @@ v6=$(grep -cE '^:do \{add address=[0-9a-fA-F:]+:' "$RSC")
 echo "===== 生成结果 ====="
 echo "v4 有效条目: $v4"
 echo "v6 有效条目: $v6"
+echo "失败源数量: $fail"
 echo "产物: $RSC ($(wc -c < "$RSC") 字节)"
 
-# 兜底：有效条目太少就直接失败，防止空壳被推上去
-if [ "$((v4 + v6))" -lt 100 ]; then
-  echo "!! 有效条目不足 100，判定生成失败"
+# 兜底：条目太少 或 失败源过半 → 判定生成失败
+total=$((v4 + v6))
+if [ "$total" -lt 100 ] || [ "$fail" -gt $((${#URLS[@]} / 2)) ]; then
+  echo "!! 校验不通过（total=$total fail=$fail），判定生成失败"
   exit 1
 fi
